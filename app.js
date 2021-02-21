@@ -4,8 +4,8 @@ const galleryHeader = document.querySelector('.gallery-header');
 const searchBtn = document.getElementById('search-btn');
 const sliderBtn = document.getElementById('create-slider');
 const sliderContainer = document.getElementById('sliders');
-// selected image 
-let sliders = [];
+
+
 
 
 // If this key doesn't work
@@ -27,27 +27,38 @@ const showImages = (images) => {
   })
 
 }
-
-const getImages = (query) => {
-  fetch(`https://pixabay.com/api/?key=${KEY}=${query}&image_type=photo&pretty=true`)
-    .then(response => response.json())
-    .then(data => showImages(data.hitS))
-    .catch(err => console.log(err))
+async function getImages(query) {
+  try {
+    document.getElementById("spinner").style.display = 'block';
+    const res = await fetch(`https://pixabay.com/api/?key=${KEY}&q=${query}&image_type=photo&pretty=true`);
+    const data = await res.json();
+    showImages(data.hits);
+    document.getElementById("spinner").style.display = 'none';
+  } catch (error) {
+    console.log(error);
+  }
 }
+
+// selected image 
+let sliders = [];
+
 
 let slideIndex = 0;
 const selectItem = (event, img) => {
   let element = event.target;
-  element.classList.add('added');
+  // element.classList.add('added');
  
   let item = sliders.indexOf(img);
   if (item === -1) {
+    element.classList.add('added');
     sliders.push(img);
   } else {
-    alert('Hey, Already added !')
+    //deselecting an image
+    element.classList.toggle('added');
+    sliders.splice(item, 1);
   }
 }
-var timer
+var timer;
 const createSlider = () => {
   // check slider image length
   if (sliders.length < 2) {
@@ -65,7 +76,7 @@ const createSlider = () => {
 
   sliderContainer.appendChild(prevNext)
   document.querySelector('.main').style.display = 'block';
-  // hide image aria
+  // hide image area
   imagesArea.style.display = 'none';
   const duration = document.getElementById('duration').value || 1000;
   sliders.forEach(slide => {
@@ -81,6 +92,7 @@ const createSlider = () => {
     slideIndex++;
     changeSlide(slideIndex);
   }, duration);
+  
 }
 
 // change slider index 
@@ -101,6 +113,7 @@ const changeSlide = (index) => {
     index = 0;
     slideIndex = 0;
   }
+ 
 
   items.forEach(item => {
     item.style.display = "none"
@@ -108,15 +121,27 @@ const changeSlide = (index) => {
 
   items[index].style.display = "block"
 }
+// Searching by pressing enter
+const searchInp = document.getElementById('search');
+searchInp.addEventListener("keypress", function (event) {
+  if (event.key == "Enter") {
+    onClickSearch();
+  }
+})
 
-searchBtn.addEventListener('click', function () {
+searchBtn.addEventListener("click", onClickSearch);
+
+async function onClickSearch() {
   document.querySelector('.main').style.display = 'none';
   clearInterval(timer);
   const search = document.getElementById('search');
-  getImages(search.value)
+  getImages(search.value);
   sliders.length = 0;
-})
 
+  // erasing innertext of input field after "onclick"/"onpress"
+  document.getElementById('search').value = "";
+}
 sliderBtn.addEventListener('click', function () {
   createSlider()
 })
+
